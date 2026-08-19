@@ -1,0 +1,66 @@
+AI-ENABLED QUALITY INSPECTION SYSTEM - DETAILED WIRING GUIDE (FINAL)
+=============================================================================
+
+1. POWER SUPPLY SETUP
+--------------------------------------------------
+Component | Terminal | Connect To
+----------|----------|------------------------------------
+L298N     | 12V      | +9V Battery / Adapter (Positive)
+L298N     | GND      | Battery Negative (-) AND STM32 GND
+L298N     | 5V       | STM32 5V, ESP32 Vin, IR VCC, Ultrasonic VCC
+
+
+2. STM32 F103RB TO L298N (MOTOR CONTROL)
+--------------------------------------------------
+L298N Pin | STM32 Pin | Function
+----------|-----------|----------------------------------
+ENA       | PA0       | Speed Control (PWM) - Motor Pair 1
+IN1       | PA1       | Motor A Direction 1
+IN2       | PA4       | Motor A Direction 2
+IN3       | PB0       | Motor B Direction 1
+IN4       | PB1       | Motor B Direction 2
+ENB       | PB10      | Speed Control (PWM) - Motor Pair 2
+
+
+3. L298N TO MOTORS
+--------------------------------------------------
+OUT1 & OUT2 -> Motor Pair 1 (first two motors)
+OUT3 & OUT4 -> Motor Pair 2 (next two motors)
+
+
+4. SENSOR CONNECTIONS
+--------------------------------------------------
+SENSOR: **IR SENSOR** (Object Detection)
+  - VCC   -> L298N 5V output
+  - GND   -> Common GND
+  - OUT   -> STM32 PB12
+
+SENSOR: **ULTRASONIC SENSOR (HC-SR04)**
+  - VCC   -> L298N 5V output
+  - GND   -> Common GND
+  - TRIG  -> STM32 PB13
+  - ECHO  -> STM32 PB14
+
+
+5. COMMUNICATION: STM32 <-> ESP32 (UART1)
+--------------------------------------------------
+*** IMPORTANT: DO NOT USE PA2/PA3 ***
+*** PA2/PA3 are used by USB Serial Monitor ***
+
+STM32 Pin  | ESP32 Pin    | Function
+-----------|--------------|----------------------------------
+PA9  (TX1) | GPIO 16 (RX) | STM32 sends data to ESP32
+PA10 (RX1) | GPIO 17 (TX) | ESP32 sends commands to STM32
+GND        | GND          | COMMON GROUND (MANDATORY!)
+
+
+6. POWER RAILS SUMMARY
+--------------------------------------------------
+VCC (+5V):  L298N 5V -> STM32 5V -> ESP32 Vin -> IR VCC -> Ultrasonic VCC
+GND (0V):   Battery(-) -> L298N GND -> STM32 GND -> ESP32 GND -> IR GND -> Ultrasonic GND
+
+
+IMPORTANT REMINDERS:
+- L298N "5V Enable" jumper must be ON
+- All GNDs MUST be connected together
+- ESP32 only supports 2.4GHz WiFi
