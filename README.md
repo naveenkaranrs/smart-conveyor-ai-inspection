@@ -1,0 +1,1 @@
+# smart-conveyor-ai-inspection
