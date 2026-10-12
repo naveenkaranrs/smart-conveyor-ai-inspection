@@ -9,8 +9,8 @@
  */
 
 // --- Network Settings ---
-const char* ssid = "deepak";
-const char* password = "87654321";
+const char* ssid = "YOUR_WIFI_SSID";
+const char* password = "YOUR_WIFI_PASSWORD";
 
 // --- Pins ---
 #define RXD2 16
