@@ -1,55 +1,71 @@
-# Smart Conveyor AI Quality Inspection System 🏭🤖
+# Smart Conveyor Dual-MCU Quality Inspection System 🏭🤖
 
-An intelligent, IoT-enabled industrial conveyor belt quality inspection system that integrates embedded microcontroller motor management (STM32 F103RB), edge wireless communication (ESP32 Gateway), and AI-powered computer vision defect detection.
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Target: STM32F103](https://img.shields.io/badge/Actuation-STM32F103-002B49?logo=stmicroelectronics)](https://www.st.com)
+[![Gateway: ESP32](https://img.shields.io/badge/Gateway-ESP32-E7352C?logo=espressif)](https://www.espressif.com)
 
----
-
-## 🌟 Key Features
-
-- **Embedded Motor Driver**: STM32 F103RB microcontroller managing L298N H-bridge for precise PWM motor speed and direction control.
-- **Sensor Integration**: Infrared (IR) sensor for object detection and HC-SR04 Ultrasonic sensor for item distance/presence verification.
-- **Wireless IoT Gateway**: ESP32 module acting as a gateway for sensor telemetry and relaying control commands.
-- **AI Inspection Pipeline**: Computer vision vision-based quality control model inspecting item features in real-time.
+An automated industrial quality control conveyor belt prototype combining dual-microcontroller embedded control with real-time computer vision defect inspection.
 
 ---
 
-## 📁 Repository Structure
+## 🏗️ Hardware Architecture & Inter-MCU Bridge
 
 ```
-.
-├── ai_inspection/           # Computer vision defect & quality inspection models
-├── conveyor_controller/     # STM32 F103RB main motor & sensor control firmware
-├── esp32_gateway/           # ESP32 WiFi telemetry & remote command gateway
-└── pin_connections.txt      # Hardware wiring guide & pin configuration matrix
+   ┌─────────────────────────────────────────────────────────┐
+   │               HOST PC (Computer Vision Node)            │
+   │  OpenCV Canny Edge Density & Contour Irregularity Model │
+   └────────────────────────────┬────────────────────────────┘
+                                │ WebSocket (Port 81)
+                                ▼
+   ┌─────────────────────────────────────────────────────────┐
+   │             ESP32 WIRELESS GATEWAY & DASHBOARD          │
+   │  - Hosted HTTP Web Dashboard & WebSocket Server         │
+   │  - Auto-Stop/Resume State Machine                       │
+   └────────────────────────────┬────────────────────────────┘
+                                │ Hardware UART (115200 Baud)
+                                ▼
+   ┌─────────────────────────────────────────────────────────┐
+   │              STM32F103RB CONVEYOR CONTROLLER            │
+   │  - Hardware Timers: PWM Speed Modulation (L298N Driver) │
+   │  - Sensors: PB12 (IR Proximity), PB13/PB14 (Ultrasonic) │
+   └─────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## 🔌 Hardware Wiring Matrix
+## 🔌 Hardware Interconnects
 
-### 1. Motor Driver (STM32 to L298N)
-| L298N Pin | STM32 Pin | Function |
-| :--- | :--- | :--- |
-| **ENA** | PA0 | Speed Control (PWM) - Motor Pair 1 |
-| **IN1** | PA1 | Motor A Direction 1 |
-| **IN2** | PA4 | Motor A Direction 2 |
-| **IN3** | PB0 | Motor B Direction 1 |
-| **IN4** | PB1 | Motor B Direction 2 |
-| **ENB** | PB10 | Speed Control (PWM) - Motor Pair 2 |
+### 1. STM32F103RB to L298N Motor Driver
+| Function | STM32 Pin | L298N Driver | Description |
+| :--- | :---: | :---: | :--- |
+| **PWM Channel A** | PA0 (TIM2_CH1) | ENA | Front motor pair speed regulation |
+| **Direction IN1** | PA1 | IN1 | Channel A forward logic |
+| **Direction IN2** | PA4 | IN2 | Channel A reverse logic |
+| **Direction IN3** | PB0 | IN3 | Channel B forward logic |
+| **Direction IN4** | PB1 | IN4 | Channel B reverse logic |
+| **PWM Channel B** | PB10 (TIM2_CH3)| ENB | Rear motor pair speed regulation |
 
-### 2. Sensors
-- **IR Sensor (Object Detection)**: VCC ➔ 5V | GND ➔ GND | OUT ➔ STM32 PB12
-- **Ultrasonic Sensor (HC-SR04)**: VCC ➔ 5V | GND ➔ GND | TRIG ➔ STM32 PB13 | ECHO ➔ STM32 PB14
+### 2. Inter-MCU UART Telemetry Bus
+- **STM32 USART1 (PA9 TX)** ──► **ESP32 GPIO16 (RX2)**
+- **STM32 USART1 (PA10 RX)** ◄── **ESP32 GPIO17 (TX2)**
+- **Common Signal Ground**
 
 ---
 
-## 🚀 Getting Started
+## 🔍 Vision Inspection Pipeline & Technical Details
 
-1. **Hardware Setup**: Wire the components according to `pin_connections.txt`.
-2. **Flash Microcontrollers**:
-   - Upload `conveyor_controller` firmware to STM32 F103RB via STM32CubeIDE / STM32duino.
-   - Upload `esp32_gateway` code to the ESP32 using Arduino IDE.
-3. **AI Inspection**: Run the Python AI inspection script in `ai_inspection/` with OpenCV and TensorFlow/PyTorch dependencies installed.
+- **Defect Detection Methodology:** Uses computer vision edge density analysis (Canny thresholding `[50, 150]`) and contour circularity ($4\pi \cdot \text{Area} / \text{Perimeter}^2$) in Python/OpenCV.
+- **Fail-Safe Mechanism:** When edge irregularity exceeds 30% for 3 consecutive frames, a `STOP` command is dispatched over WebSockets to the ESP32, which commands the STM32 to halt motors.
+- **Auto-Recovery:** If 3 consecutive good frames are verified after a stop, the conveyor automatically resumes operation.
+
+---
+
+## 📋 TODO & Hardware Validation Checklist
+
+- [ ] Measure exact conveyor belt travel speed (cm/s) under load.
+- [ ] Record ultrasonic response time and trigger distance margin.
+- [ ] Document physical belt dimensions and roller gear ratio.
+- [ ] Add hardware test bench photos and wiring harness schematics.
 
 ---
 
